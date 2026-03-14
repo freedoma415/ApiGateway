@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ApiGateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+      routes:
+        - id: product-service-route
+          # The 'lb://' means Load Balancer! It looks up the name in Eureka.
+          uri: lb://product-service
+          predicates:
+            - Path=/api/cart/**
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: http://localhost:8761/eureka/
