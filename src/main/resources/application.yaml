@@ -6,20 +6,36 @@ spring:
     name: ApiGateway
   cloud:
     gateway:
-      globalcors:
-        cors-configurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:3000"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+      discovery:
+        locator:
+          enabled: true
+          lower-case-service-id: true
+          
+      # THIS IS THE MAGIC FIX for the "Multiple CORS values" error:
+      # It cuts off the extra '*' and only keeps the 'http://localhost:3000'
+      default-filters:
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
+        
       routes:
-        - id: product-service-route
-          # The 'lb://' means Load Balancer! It looks up the name in Eureka.
-          uri: lb://product-service
+        - id: product-route
+          uri: lb://PRODUCT
           predicates:
-            - Path=/api/cart/**
+            - Path=/api/products/**
+            
+        - id: order-route
+          uri: lb://ORDER-SERVICE
+          predicates:
+            - Path=/api/order/**
 
 eureka:
+  instance:
+    prefer-ip-address: true
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+
+# This tells us EXACTLY why a route is failing if it 404s
+logging:
+  level:
+    org.springframework.cloud.gateway: TRACE
+    org.springframework.http.server.reactive: DEBUG
