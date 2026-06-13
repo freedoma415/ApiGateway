@@ -36,6 +36,7 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+		
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -51,7 +52,12 @@
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 		</dependency>
-
+		<dependency>
+            <org.springframework.boot>spring-boot-starter-actuator</org.springframework.boot>
+        </dependency>
+        <dependency>
+            <io.micrometer>micrometer-registry-prometheus</io.micrometer>
+        </dependency>
 		<dependency>
 			<groupId>org.springframework.cloud</groupId>
 			<artifactId>spring-cloud-starter-loadbalancer</artifactId>

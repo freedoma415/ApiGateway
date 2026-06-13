@@ -26,6 +26,12 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
         
         System.out.println("🛡️ [GATEWAY] Request incoming... checking for VIP pass.");
 
+        // 🚨 CORS FIX: Let the browser's invisible Preflight check pass through!
+        if (exchange.getRequest().getMethod().name().equals("OPTIONS")) {
+            System.out.println("🛃 [GATEWAY] Allowing CORS Preflight OPTIONS request.");
+            return chain.filter(exchange);
+        }
+
         // 1. Look for the "Authorization" header
         if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
             System.out.println("🚨 [GATEWAY] BLOCKED: No Authorization Header found!");

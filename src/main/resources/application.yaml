@@ -3,39 +3,36 @@ server:
 
 spring:
   application:
-    name: ApiGateway
+    name: API-GATEWAY
   cloud:
     gateway:
-      discovery:
-        locator:
-          enabled: true
-          lower-case-service-id: true
-          
-      # THIS IS THE MAGIC FIX for the "Multiple CORS values" error:
-      # It cuts off the extra '*' and only keeps the 'http://localhost:3000'
-      default-filters:
-        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Credentials, RETAIN_FIRST
-        
+      # 🚨 NEW: The Global CORS Policy
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins: "http://localhost:3000"
+            allowedMethods: "*"
+            allowedHeaders: "*"
       routes:
-        - id: product-route
+        - id: Product
           uri: lb://PRODUCT
           predicates:
             - Path=/api/products/**
-            
-        - id: order-route
+        - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/api/order/**
+            - Path=/api/order, /api/order/**
 
+  management:
+  endpoints:
+    web:
+      exposure:
+        include: prometheus, health, info
+  metrics:
+    tags:
+      application: ${spring.application.name} # This helps Grafana tell them apart!          
+            
 eureka:
-  instance:
-    prefer-ip-address: true
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-
-# This tells us EXACTLY why a route is failing if it 404s
-logging:
-  level:
-    org.springframework.cloud.gateway: TRACE
-    org.springframework.http.server.reactive: DEBUG
