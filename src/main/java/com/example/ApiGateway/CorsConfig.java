@@ -17,7 +17,7 @@ public class CorsConfig {
         CorsConfiguration corsConfig = new CorsConfiguration();
         
         // Give React the VIP Pass
-        corsConfig.setAllowedOrigins(Collections.singletonList("http://localhost:3000"));
+        corsConfig.setAllowedOrigins(Collections.singletonList("http://localhost:3001"));
         
         // Allow all standard HTTP methods
         corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
