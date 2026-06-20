@@ -6,11 +6,11 @@ spring:
     name: API-GATEWAY
   cloud:
     gateway:
-      # 🚨 NEW: The Global CORS Policy
+      # The Global CORS Policy
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "http://localhost:3000"
+            allowedOrigins: "http://localhost:3001"
             allowedMethods: "*"
             allowedHeaders: "*"
       routes:
@@ -23,16 +23,20 @@ spring:
           predicates:
             - Path=/api/order, /api/order/**
 
-  management:
+# 🚨 FIX 1: Management moved to the root level with correct indentations
+management:
   endpoints:
     web:
       exposure:
         include: prometheus, health, info
   metrics:
     tags:
-      application: ${spring.application.name} # This helps Grafana tell them apart!          
+      application: ${spring.application.name} 
             
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
+    # 🚨 FIX 2: Explicitly forcing Eureka registration
+    fetch-registry: true
+    register-with-eureka: true
