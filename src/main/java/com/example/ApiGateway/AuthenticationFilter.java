@@ -18,55 +18,48 @@ import reactor.core.publisher.Mono;
 @Component
 public class AuthenticationFilter implements GlobalFilter, Ordered {
 
-    // 🚨 THIS MUST MATCH THE SECRET IN YOUR AUTH SERVICE EXACTLY
     public static final String SECRET = "5367566B59703373367639792F423F4528482B4D6251655468576D5A71347437";
 
     @Override
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         
-        System.out.println("🛡️ [GATEWAY] Request incoming... checking for VIP pass.");
-
-        // 🚨 CORS FIX: Let the browser's invisible Preflight check pass through!
+        // 🚨 1. IGNORE PRE-FLIGHT (OPTIONS)
+        // Let the CorsConfig handle the browser's permission check
         if (exchange.getRequest().getMethod().name().equals("OPTIONS")) {
-            System.out.println("🛃 [GATEWAY] Allowing CORS Preflight OPTIONS request.");
             return chain.filter(exchange);
         }
 
-        // 1. Look for the "Authorization" header
-        if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
-            System.out.println("🚨 [GATEWAY] BLOCKED: No Authorization Header found!");
-            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-            return exchange.getResponse().setComplete(); // Kicks them out
+        String path = exchange.getRequest().getURI().getPath();
+        
+        // 2. Public Door (Login)
+        if (path.contains("/auth/login")) {
+            return chain.filter(exchange);
         }
 
-        // 2. Extract the header
+        // 3. Token Validation
+        if (!exchange.getRequest().getHeaders().containsKey(HttpHeaders.AUTHORIZATION)) {
+            exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+            return exchange.getResponse().setComplete(); 
+        }
+
         String authHeader = exchange.getRequest().getHeaders().get(HttpHeaders.AUTHORIZATION).get(0);
         
-        // 3. Ensure it is a "Bearer" token
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7); // Removes the word "Bearer " to get just the token
-            
+            String token = authHeader.substring(7);
             try {
-                // 4. Cryptographically verify the token's signature and expiration
                 Jwts.parserBuilder()
                     .setSigningKey(getSigningKey())
                     .build()
                     .parseClaimsJws(token);
-                    
-                System.out.println("✅ [GATEWAY] Token verified! Letting request pass to backend...");
-                
             } catch (Exception e) {
-                System.out.println("🚨 [GATEWAY] BLOCKED: Token is forged or expired!");
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
         } else {
-            System.out.println("🚨 [GATEWAY] BLOCKED: Malformed token format!");
             exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
             return exchange.getResponse().setComplete();
         }
 
-        // 5. If everything is good, let the request continue to the Product or Order Service
         return chain.filter(exchange);
     }
 
@@ -77,6 +70,8 @@ public class AuthenticationFilter implements GlobalFilter, Ordered {
 
     @Override
     public int getOrder() {
-        return -1; // This guarantees this filter runs FIRST before anything else
+        // -1 ensures this filter runs AFTER the CorsWebFilter, 
+        // so CORS gets handled first!
+        return -1; 
     }
 }

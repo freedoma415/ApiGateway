@@ -2,17 +2,13 @@ server:
   port: 8082
 
 spring:
-  application:
-    name: API-GATEWAY
   cloud:
     gateway:
-      # The Global CORS Policy
-      globalcors:
-        corsConfigurations:
-          '[/**]':
-            allowedOrigins: "http://localhost:3001"
-            allowedMethods: "*"
-            allowedHeaders: "*"
+      default-filters:
+        - name: DedupeResponseHeader
+          args:
+            name: Access-Control-Allow-Origin Access-Control-Allow-Credentials
+            strategy: RETAIN_UNIQUE
       routes:
         - id: Product
           uri: lb://PRODUCT
@@ -21,22 +17,32 @@ spring:
         - id: order-service
           uri: lb://ORDER-SERVICE
           predicates:
-            - Path=/api/order, /api/order/**
+            - Path=/api/orders/**
+        - id: inventory-service
+          uri: lb://INVENTORY-SERVICE  # Or http://localhost:8086
+          predicates:
+            - Path=/api/inventory/**
+        - id: cart-service
+          uri: lb://CART-SERVICE
+          predicates:
+            - Path=/api/cart/**
+        - id: auth-service
+          uri: lb://AUTH-SERVICE
+          predicates:
+            - Path=/auth/**
 
-# 🚨 FIX 1: Management moved to the root level with correct indentations
 management:
   endpoints:
     web:
       exposure:
-        include: prometheus, health, info
+        include: "*"
   metrics:
     tags:
-      application: ${spring.application.name} 
+      application: ${spring.application.name}
             
 eureka:
   client:
     serviceUrl:
       defaultZone: http://localhost:8761/eureka/
-    # 🚨 FIX 2: Explicitly forcing Eureka registration
     fetch-registry: true
     register-with-eureka: true

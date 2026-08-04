@@ -1,7 +1,7 @@
-package com.example.ApiGateway; // <-- Update this if your package is different!
+package com.example.ApiGateway;
 
 import java.util.Arrays;
-import java.util.Collections;
+import java.util.List;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -14,21 +14,23 @@ public class CorsConfig {
 
     @Bean
     public CorsWebFilter corsWebFilter() {
-        CorsConfiguration corsConfig = new CorsConfiguration();
+        CorsConfiguration config = new CorsConfiguration();
         
-        // Give React the VIP Pass
-        corsConfig.setAllowedOrigins(Collections.singletonList("http://localhost:3001"));
+        // 1. Allow your React app
+        config.setAllowedOrigins(List.of("http://localhost:3001"));
         
-        // Allow all standard HTTP methods
-        corsConfig.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        // 2. Allow all standard HTTP methods including OPTIONS
+        config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         
-        // Allow all headers and credentials
-        corsConfig.setAllowedHeaders(Collections.singletonList("*"));
-        corsConfig.setAllowCredentials(true);
+        // 3. Allow all headers
+        config.setAllowedHeaders(List.of("*"));
         
-        // Apply this rule to every single route in the Gateway
+        // 4. Allow credentials (tokens, cookies)
+        config.setAllowCredentials(true);
+
+        // Apply this rule to all routes in the Gateway
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", corsConfig);
+        source.registerCorsConfiguration("/**", config);
 
         return new CorsWebFilter(source);
     }
